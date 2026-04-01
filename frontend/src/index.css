@@ -1,0 +1,10 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+.signup-layout .left-panel .signup-text {
+  margin-top: 450px !important; /* adjust the value as needed */
+  line-height: 1 !important; /* optional, makes text spacing nicer */
+}
