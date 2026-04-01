@@ -99,12 +99,62 @@ export async function listAdminWeddings(req, res) {
   const userIds = [...new Set(docs.map((d) => String(d.userId)))];
   const users = await User.find({ _id: { $in: userIds } }).select("name").lean();
   const userMap = new Map(users.map((u) => [String(u._id), u.name]));
+  const weddingIds = docs.map((w) => w._id);
+  const guestCounts = await Guest.aggregate([
+    { $match: { weddingId: { $in: weddingIds } } },
+    { $group: { _id: "$weddingId", count: { $sum: 1 } } },
+  ]);
+  const guestMap = new Map(guestCounts.map((g) => [String(g._id), g.count]));
 
   res.json({
     weddings: docs.map((w) => ({
       ...w,
       userName: userMap.get(String(w.userId)) || "Unknown User",
+      guestCount: guestMap.get(String(w._id)) || 0,
     })),
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit) || 1,
+  });
+}
+
+export async function listAdminWeddingGuests(req, res) {
+  const { weddingId } = req.params;
+  const page = Math.max(1, parseInt(String(req.query.page || "1"), 10) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit || "10"), 10) || 10));
+  const skip = (page - 1) * limit;
+
+  const search = String(req.query.search || "").trim();
+  const attendee = String(req.query.attendee || "").trim();
+  const mealPref = String(req.query.mealPref || "").trim();
+  const rsvp = String(req.query.rsvp || "").trim();
+
+  const filter = { weddingId };
+  if (search) {
+    const rx = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter.$or = [{ name: rx }, { email: rx }, { phone: rx }];
+  }
+  if (attendee && (attendee === "Yes" || attendee === "No")) filter.attendee = attendee;
+  if (mealPref) filter.mealPreference = mealPref;
+  if (rsvp && ["Pending", "Accepted", "Declined"].includes(rsvp)) filter.rsvpStatus = rsvp;
+
+  const wedding = await Wedding.findById(weddingId).lean();
+  if (!wedding) return res.status(404).json({ message: "Wedding not found." });
+  const owner = await User.findById(wedding.userId).select("name email").lean();
+
+  const [total, guests] = await Promise.all([
+    Guest.countDocuments(filter),
+    Guest.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+  ]);
+
+  res.json({
+    wedding: {
+      ...wedding,
+      ownerName: owner?.name || "Unknown User",
+      ownerEmail: owner?.email || "",
+    },
+    guests,
     page,
     limit,
     total,

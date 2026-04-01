@@ -866,8 +866,8 @@
 
 .download-menu {
   position: absolute;
-  left: 0;
-  bottom: calc(100% + 8px);
+  right: 0;
+  top: calc(100% + 8px);
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -1122,6 +1122,7 @@
   justify-content: space-between;
   color: #fff;
   padding: 18px 4px 10px;
+  margin-bottom: 18px;
 }
 
 .admin-topbar h1 {
@@ -1147,6 +1148,14 @@
 .admin-page {
   display: grid;
   gap: 16px;
+}
+
+.admin-page .user-page-head {
+  margin-bottom: 10px;
+}
+
+.admin-page .guest-toolbar {
+  margin-bottom: 10px;
 }
 
 @media (max-width: 900px) {
@@ -1420,6 +1429,16 @@
 
 .admin-search-full {
   max-width: 350px;
+}
+
+.admin-meal-filter {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: #111827;
+  min-width: 120px;
 }
 
 @media (max-width: 1100px) {

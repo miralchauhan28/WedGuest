@@ -8,6 +8,7 @@ router.use(requireAuth, requireAdminRole);
 
 router.get("/dashboard", admin.getAdminDashboard);
 router.get("/weddings", admin.listAdminWeddings);
+router.get("/weddings/:weddingId/guests", admin.listAdminWeddingGuests);
 router.get("/users", admin.listAdminUsers);
 router.post("/users", admin.createAdminUser);
 router.put("/users/:id", admin.updateAdminUser);
