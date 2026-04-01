@@ -44,13 +44,37 @@ export async function getAdminDashboard(req, res) {
     count: monthMap.get(idx + 1) || 0,
   }));
 
-  const latestNotifications = await AdminNotification.find({}).sort({ createdAt: -1 }).limit(8).lean();
+  const topWeddingGuestRows = await Guest.aggregate([
+    { $group: { _id: "$weddingId", guestCount: { $sum: 1 } } },
+    { $sort: { guestCount: -1 } },
+    { $limit: 6 },
+    {
+      $lookup: {
+        from: "weddings",
+        localField: "_id",
+        foreignField: "_id",
+        as: "wedding",
+      },
+    },
+    { $unwind: { path: "$wedding", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        _id: 0,
+        weddingId: "$_id",
+        coupleName: { $ifNull: ["$wedding.coupleName", "Unknown Wedding"] },
+        guestCount: 1,
+      },
+    },
+  ]);
+
+  const latestNotifications = await AdminNotification.find({}).sort({ createdAt: -1 }).limit(7).lean();
 
   res.json({
     stats: { totalWeddings, totalUsers, totalGuests, pendingRsvp },
     rsvpBreakdown: { accepted, pending: pendingRsvp, declined },
     userStatus: { active: activeUsers, inactive: inactiveUsers },
     weddingsPerMonth,
+    topWeddingsByGuests: topWeddingGuestRows,
     latestNotifications,
   });
 }
