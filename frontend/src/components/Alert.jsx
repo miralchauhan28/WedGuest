@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const FADE_MS = 400;
 const AUTO_DISMISS_MS = 3000;
 
-export function Alert({ variant = "success", children, onDismiss }) {
+export function Alert({ variant = "success", children, onDismiss, autoDismiss = true }) {
   const [visible, setVisible] = useState(true);
   const [fading, setFading] = useState(false);
   const onDismissRef = useRef(onDismiss);
@@ -30,12 +30,13 @@ export function Alert({ variant = "success", children, onDismiss }) {
   }, [startFadeThenRemove]);
 
   useEffect(() => {
+    if (!autoDismiss) return undefined;
     timersRef.current.autoFade = setTimeout(startFadeThenRemove, AUTO_DISMISS_MS);
     return () => {
       clearTimeout(timersRef.current.autoFade);
       clearTimeout(timersRef.current.afterFade);
     };
-  }, [startFadeThenRemove]);
+  }, [autoDismiss, startFadeThenRemove]);
 
   if (!visible) return null;
 

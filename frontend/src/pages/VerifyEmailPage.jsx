@@ -67,12 +67,12 @@ function VerifyEmailPage() {
           <p className="msg ok verify-pending">Verifying your email...</p>
         )}
         {showSuccess && status && !isVerifying && (
-          <Alert variant="success" key={status} onDismiss={() => setStatus("")}>
+          <Alert variant="success" key={status} onDismiss={() => setStatus("")} autoDismiss={false}>
             {status}
           </Alert>
         )}
         {showError && error && (
-          <Alert variant="error" key={error} onDismiss={() => setError("")}>
+          <Alert variant="error" key={error} onDismiss={() => setError("")} autoDismiss={false}>
             {error}
           </Alert>
         )}

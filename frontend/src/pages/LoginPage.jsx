@@ -3,6 +3,7 @@ import { useState } from "react";
 import AuthLogo from "../components/AuthLogo.jsx";
 import { Alert } from "../components/Alert.jsx";
 import { apiPost, setAuth } from "../services/api.js";
+import { getSupportEmail, getSupportMailto } from "../utils/support.js";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -73,7 +74,11 @@ function LoginPage() {
           Don&apos;t Have An Account ? <Link to="/signup">Sign Up</Link>
         </p>
         <p className="muted-center">
-          Having Trouble? <a href="#">Reach Out To Support</a>
+          Having Trouble?{" "}
+          <a href={getSupportMailto("WedGuest Login Support")} target="_blank" rel="noreferrer">
+            Reach Out To Support
+          </a>{" "}
+          ({getSupportEmail()})
         </p>
       </div>
     </div>

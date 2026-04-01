@@ -4,6 +4,7 @@ import AuthLogo from "../components/AuthLogo.jsx";
 import { Alert } from "../components/Alert.jsx";
 import { apiPost } from "../services/api.js";
 import { validatePassword } from "../utils/validation.js";
+import { getSupportEmail, getSupportMailto } from "../utils/support.js";
 
 function SignupPage() {
   const [form, setForm] = useState({
@@ -113,7 +114,11 @@ function SignupPage() {
             Already Have An Account ? <Link to="/">Log In</Link>
           </p>
           <p className="muted-center">
-            Having Trouble? <a href="#">Reach Out To Support</a>
+            Having Trouble?{" "}
+            <a href={getSupportMailto("WedGuest Signup Support")} target="_blank" rel="noreferrer">
+              Reach Out To Support
+            </a>{" "}
+            ({getSupportEmail()})
           </p>
         </div>
       </section>
