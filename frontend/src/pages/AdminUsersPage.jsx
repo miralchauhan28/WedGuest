@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import Modal from "../components/Modal.jsx";
 import Pagination from "../components/Pagination.jsx";
 import { apiDelete, apiGet, apiPost, apiPut } from "../services/api.js";
@@ -21,6 +24,8 @@ function AdminUsersPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm());
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -56,6 +61,96 @@ function AdminUsersPage() {
     load();
   }, [load]);
 
+  async function fetchAllUsers() {
+    const all = [];
+    let p = 1;
+    let pages = 1;
+    const base = new URLSearchParams();
+    if (search) base.set("search", search);
+    if (status) base.set("status", status);
+    do {
+      const qs = new URLSearchParams(base);
+      qs.set("page", String(p));
+      qs.set("limit", "50");
+      const res = await apiGet(`/api/admin/users?${qs.toString()}`);
+      all.push(...(res.users || []));
+      pages = res.totalPages || 1;
+      p += 1;
+    } while (p <= pages);
+    return all;
+  }
+
+  function toCsv(data) {
+    const headers = ["Name", "Email", "Weddings Created", "Active Status"];
+    const lines = [headers.join(",")];
+    for (const u of data) {
+      lines.push(
+        [u.name, u.email, u.weddingsCreated, u.isActive ? "Active" : "Inactive"]
+          .map((x) => `"${String(x ?? "").replace(/"/g, '""')}"`)
+          .join(",")
+      );
+    }
+    return lines.join("\r\n");
+  }
+
+  async function downloadCsv() {
+    setExportOpen(false);
+    setExporting(true);
+    try {
+      const all = await fetchAllUsers();
+      const blob = new Blob([toCsv(all)], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "users-overview.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+      showSuccess("Users CSV downloaded.");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function downloadPdf() {
+    setExportOpen(false);
+    setExporting(true);
+    try {
+      const all = await fetchAllUsers();
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const navy = [5, 10, 36];
+      doc.setFillColor(...navy);
+      doc.rect(0, 0, doc.internal.pageSize.getWidth(), 72, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("WEDGUEST", 40, 45);
+      doc.setTextColor(...navy);
+      doc.setFontSize(14);
+      doc.text("Admin Users Report", 40, 102);
+      autoTable(doc, {
+        startY: 120,
+        head: [["Name", "Email", "Weddings", "Status"]],
+        body: all.map((u) => [
+          u.name,
+          u.email,
+          String(u.weddingsCreated ?? 0),
+          u.isActive ? "Active" : "Inactive",
+        ]),
+        headStyles: { fillColor: navy, textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [245, 247, 252] },
+        margin: { left: 40, right: 40 },
+      });
+      doc.save("users-overview.pdf");
+      showSuccess("Users PDF downloaded.");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   function openAdd() {
     setForm(emptyForm());
     setAddOpen(true);
@@ -71,8 +166,16 @@ function AdminUsersPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await apiPost("/api/admin/users", { name: form.name, email: form.email });
-      showSuccess("User created.");
+      const res = await apiPost("/api/admin/users", { name: form.name, email: form.email });
+      showSuccess(res.message || "User created.");
+      if (res.emailSent === false && res.tempPassword) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Email could not be sent",
+          html: `Share this temporary password with the user:<br><strong style="user-select:all">${res.tempPassword}</strong>`,
+          confirmButtonColor: "#2f3068",
+        });
+      }
       setAddOpen(false);
       load();
     } catch (err) {
@@ -128,16 +231,45 @@ function AdminUsersPage() {
           />
           <span aria-hidden>⌕</span>
         </div>
-        <div className="guest-filters">
-          <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
-            <option value="">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+        <div className="guest-toolbar-end">
+          <div className="guest-filters">
+            <select
+              className="admin-meal-filter"
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div className="download-menu-wrap">
+            <button
+              type="button"
+              className="btn-white btn-sm"
+              onClick={() => setExportOpen((v) => !v)}
+              disabled={exporting}
+            >
+              Download
+            </button>
+            {exportOpen && (
+              <div className="download-menu">
+                <button type="button" className="download-menu-item" onClick={downloadCsv}>
+                  Excel (CSV)
+                </button>
+                <button type="button" className="download-menu-item" onClick={downloadPdf}>
+                  PDF
+                </button>
+              </div>
+            )}
+          </div>
+          <button type="button" className="btn-white btn-em" onClick={openAdd}>
+            + Add New
+          </button>
         </div>
-        <button type="button" className="btn-white btn-em" onClick={openAdd}>
-          + Add New
-        </button>
       </div>
 
       <div className="table-wrap">
@@ -202,6 +334,9 @@ function AdminUsersPage() {
         }
       >
         <form id="admin-add-user" className="modal-form" onSubmit={createUser}>
+          <p className="user-muted" style={{ marginTop: 0 }}>
+            A temporary password will be emailed to this address. Ask them to change it after signing in.
+          </p>
           <label>
             Name
             <input required minLength={2} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />

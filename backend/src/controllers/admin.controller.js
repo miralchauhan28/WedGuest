@@ -5,6 +5,8 @@ import User from "../models/User.js";
 import Wedding from "../models/Wedding.js";
 import { validateEmail, validateName } from "../utils/authValidation.js";
 import { createAdminNotification } from "../services/adminNotificationService.js";
+import { sendAdminCreatedUserEmail } from "../services/mailService.js";
+import { getFrontendUrl } from "../utils/appUrls.js";
 
 function normalizeStatus(v) {
   const s = String(v || "").trim().toLowerCase();
@@ -225,9 +227,27 @@ export async function createAdminUser(req, res) {
 
   await createAdminNotification("User created", `Admin created user "${user.name}" (${user.email}).`);
 
+  const loginUrl = `${getFrontendUrl().replace(/\/+$/, "")}/login`;
+  let emailSent = false;
+  try {
+    await sendAdminCreatedUserEmail({
+      to: user.email,
+      name: user.name,
+      tempPassword,
+      loginUrl,
+    });
+    emailSent = true;
+  } catch (err) {
+    console.error("sendAdminCreatedUserEmail failed:", err);
+  }
+
   res.status(201).json({
-    message: "User created successfully.",
+    message: emailSent
+      ? "User created successfully. Login details were sent by email."
+      : "User created successfully. Email could not be sent — configure SMTP or share the temporary password manually.",
+    emailSent,
     user: { id: user._id, name: user.name, email: user.email, isActive: true, weddingsCreated: 0 },
+    ...(!emailSent && { tempPassword }),
   });
 }
 

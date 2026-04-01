@@ -61,6 +61,45 @@ export async function sendResetPasswordEmail(to, link) {
   });
 }
 
+export async function sendAdminCreatedUserEmail({ to, name, tempPassword, loginUrl }) {
+  if (!fromAddress) {
+    throw new Error("EMAIL_USER is not set in backend/.env");
+  }
+
+  const safeName = name || "there";
+  const safeLogin = loginUrl || "#";
+
+  await transporter.sendMail({
+    from: `"WedGuest Admin" <${fromAddress}>`,
+    to,
+    subject: "Your WedGuest account is ready",
+    html: `
+      <div style="background:#f3f4f8;padding:24px 0;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+        <div style="max-width:620px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
+          <div style="background:#050A24;padding:18px 22px;color:#ffffff;">
+            <h1 style="margin:0;font-size:24px;font-style:italic;letter-spacing:1px;">WEDGUEST</h1>
+          </div>
+          <div style="padding:24px 22px;">
+            <p style="margin:0 0 10px;">Hi <strong>${safeName}</strong>,</p>
+            <p style="margin:0 0 14px;">An administrator created a <strong>WedGuest</strong> account for you. Use the credentials below to sign in:</p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin:0 0 16px;">
+              <p style="margin:0 0 8px;"><strong>Email:</strong> ${to}</p>
+              <p style="margin:0;"><strong>Temporary password:</strong> ${tempPassword}</p>
+            </div>
+            <p style="margin:0 0 14px;">
+              <a href="${safeLogin}" style="background:#050A24;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Sign in</a>
+            </p>
+            <p style="margin:0 0 10px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;font-size:14px;">
+              <strong>Security:</strong> After you log in, please change your password in your profile settings for your security.
+            </p>
+            <p style="margin:0;color:#6b7280;font-size:13px;">If you did not expect this email, contact support.</p>
+          </div>
+        </div>
+      </div>
+    `,
+  });
+}
+
 export async function sendGuestInvitationEmail({
   to,
   guestName,
