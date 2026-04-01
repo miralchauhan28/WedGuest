@@ -15,6 +15,8 @@ router.put("/users/:id", admin.updateAdminUser);
 router.delete("/users/:id", admin.deleteAdminUser);
 router.get("/notifications", admin.listAdminNotifications);
 router.patch("/notifications/:id/read", admin.markAdminNotificationRead);
+router.patch("/notifications/read-all", admin.markAllAdminNotificationsRead);
+router.delete("/notifications/:id", admin.deleteAdminNotification);
 router.delete("/notifications", admin.clearAdminNotifications);
 
 export default router;

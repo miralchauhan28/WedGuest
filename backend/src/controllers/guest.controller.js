@@ -6,6 +6,7 @@ import { normalizeAttendee, normalizeRsvp } from "../utils/guestFields.js";
 import { createGuestRsvpLink } from "../utils/appUrls.js";
 import { createVerificationToken, hashToken } from "../utils/tokens.js";
 import { sendGuestInvitationEmail } from "../services/mailService.js";
+import { createAdminNotification } from "../services/adminNotificationService.js";
 
 async function ensureWeddingAccess(weddingId, userId) {
   return Wedding.findOne({ _id: weddingId, userId });
@@ -151,6 +152,10 @@ export async function createGuest(req, res) {
       invitationEmailSent,
       guest: g,
     });
+    await createAdminNotification(
+      "Guest added",
+      `${host?.name || "A user"} added guest "${g.name}" to "${w.coupleName}".`
+    );
   } catch (err) {
     if (err.code === 11000) {
       return res.status(409).json({ message: "A guest with this email already exists for this wedding." });
@@ -198,6 +203,7 @@ export async function respondGuestInvitation(req, res) {
 export async function updateGuest(req, res) {
   const w = await ensureWeddingAccess(req.params.weddingId, req.userId);
   if (!w) return res.status(404).json({ message: "Wedding not found." });
+  const actor = await User.findById(req.userId).select("name").lean();
   const existing = await Guest.findOne({ _id: req.params.guestId, weddingId: req.params.weddingId });
   if (!existing) return res.status(404).json({ message: "Guest not found." });
 
@@ -216,6 +222,10 @@ export async function updateGuest(req, res) {
   try {
     existing.set(check.value);
     await existing.save();
+    await createAdminNotification(
+      "Guest updated",
+      `${actor?.name || "A user"} updated guest "${existing.name}" in "${w.coupleName}".`
+    );
     res.json({ message: "Guest updated.", guest: existing });
   } catch (err) {
     if (err.code === 11000) {
@@ -228,8 +238,13 @@ export async function updateGuest(req, res) {
 export async function deleteGuest(req, res) {
   const w = await ensureWeddingAccess(req.params.weddingId, req.userId);
   if (!w) return res.status(404).json({ message: "Wedding not found." });
+  const actor = await User.findById(req.userId).select("name").lean();
   const g = await Guest.findOneAndDelete({ _id: req.params.guestId, weddingId: req.params.weddingId });
   if (!g) return res.status(404).json({ message: "Guest not found." });
+  await createAdminNotification(
+    "Guest deleted",
+    `${actor?.name || "A user"} deleted guest "${g.name}" from "${w.coupleName}".`
+  );
   res.json({ message: "Guest removed." });
 }
 
@@ -267,6 +282,7 @@ function parseCsvLine(line) {
 export async function bulkUploadGuests(req, res) {
   const w = await ensureWeddingAccess(req.params.weddingId, req.userId);
   if (!w) return res.status(404).json({ message: "Wedding not found." });
+  const actor = await User.findById(req.userId).select("name").lean();
 
   if (!req.file?.buffer) {
     return res.status(400).json({ message: "Upload a CSV file." });
@@ -335,4 +351,10 @@ export async function bulkUploadGuests(req, res) {
     imported: imported.length,
     errors,
   });
+  if (imported.length > 0) {
+    await createAdminNotification(
+      "Bulk guest import",
+      `${actor?.name || "A user"} imported ${imported.length} guest(s) to "${w.coupleName}".`
+    );
+  }
 }

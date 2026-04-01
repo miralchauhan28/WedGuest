@@ -4,7 +4,6 @@ import Guest from "../models/Guest.js";
 import User from "../models/User.js";
 import Wedding from "../models/Wedding.js";
 import { validateEmail, validateName } from "../utils/authValidation.js";
-import { createAdminNotification } from "../services/adminNotificationService.js";
 import { sendAdminCreatedUserEmail } from "../services/mailService.js";
 import { getFrontendUrl } from "../utils/appUrls.js";
 
@@ -225,8 +224,6 @@ export async function createAdminUser(req, res) {
     isActive: true,
   });
 
-  await createAdminNotification("User created", `Admin created user "${user.name}" (${user.email}).`);
-
   const loginUrl = `${getFrontendUrl().replace(/\/+$/, "")}/login`;
   let emailSent = false;
   try {
@@ -275,7 +272,6 @@ export async function updateAdminUser(req, res) {
 
   existing.set(update);
   await existing.save();
-  await createAdminNotification("User updated", `Admin updated user "${existing.name}".`);
   res.json({
     message: "User updated.",
     user: {
@@ -295,7 +291,6 @@ export async function deleteAdminUser(req, res) {
   const weddingIds = weddings.map((w) => w._id);
   await Wedding.deleteMany({ userId: user._id });
   if (weddingIds.length) await Guest.deleteMany({ weddingId: { $in: weddingIds } });
-  await createAdminNotification("User deleted", `Admin deleted user "${user.name}" and related data.`);
   res.json({ message: "User deleted." });
 }
 
@@ -326,6 +321,17 @@ export async function markAdminNotificationRead(req, res) {
   ).lean();
   if (!n) return res.status(404).json({ message: "Notification not found." });
   res.json({ message: "Notification marked as read.", notification: n });
+}
+
+export async function markAllAdminNotificationsRead(req, res) {
+  await AdminNotification.updateMany({ isRead: false }, { $set: { isRead: true } });
+  res.json({ message: "All notifications marked as read." });
+}
+
+export async function deleteAdminNotification(req, res) {
+  const n = await AdminNotification.findByIdAndDelete(req.params.id).lean();
+  if (!n) return res.status(404).json({ message: "Notification not found." });
+  res.json({ message: "Notification deleted." });
 }
 
 export async function clearAdminNotifications(req, res) {

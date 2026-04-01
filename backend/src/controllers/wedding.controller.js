@@ -53,18 +53,28 @@ export async function updateWedding(req, res) {
   const check = validateWeddingBody(req.body);
   if (!check.ok) return res.status(400).json({ message: check.message });
 
+  const actor = await User.findById(req.userId).select("name").lean();
   const w = await Wedding.findOneAndUpdate(
     { _id: req.params.id, userId: req.userId },
     { $set: check.value },
     { new: true }
   );
   if (!w) return res.status(404).json({ message: "Wedding not found." });
+  await createAdminNotification(
+    "Wedding updated",
+    `${actor?.name || "A user"} updated wedding "${w.coupleName}" (${w.location}).`
+  );
   res.json({ message: "Wedding updated.", wedding: w });
 }
 
 export async function deleteWedding(req, res) {
+  const actor = await User.findById(req.userId).select("name").lean();
   const w = await Wedding.findOneAndDelete({ _id: req.params.id, userId: req.userId });
   if (!w) return res.status(404).json({ message: "Wedding not found." });
   await Guest.deleteMany({ weddingId: w._id });
+  await createAdminNotification(
+    "Wedding deleted",
+    `${actor?.name || "A user"} deleted wedding "${w.coupleName}".`
+  );
   res.json({ message: "Wedding deleted." });
 }

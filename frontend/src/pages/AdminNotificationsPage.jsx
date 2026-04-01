@@ -43,6 +43,26 @@ function AdminNotificationsPage() {
     }
   }
 
+  async function markAllRead() {
+    try {
+      await apiPatch("/api/admin/notifications/read-all", {});
+      showSuccess("All notifications marked as read.");
+      load();
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  async function clearOne(id) {
+    try {
+      await apiDelete(`/api/admin/notifications/${id}`);
+      showSuccess("Notification cleared.");
+      load();
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
   async function clearAll() {
     try {
       await apiDelete("/api/admin/notifications");
@@ -60,6 +80,9 @@ function AdminNotificationsPage() {
         <div className="admin-noti-head">
           <h3>Notifications</h3>
           <div className="user-actions">
+            <button type="button" className="btn-white btn-sm" onClick={markAllRead}>
+              Read All
+            </button>
             <button type="button" className="btn-white btn-sm" onClick={clearAll}>
               Clear All
             </button>
@@ -74,9 +97,14 @@ function AdminNotificationsPage() {
           rows.map((n) => (
             <div key={n._id} className={`admin-noti-row ${n.isRead ? "is-read" : ""}`}>
               <p>{n.message}</p>
-              <button type="button" className="icon-btn" onClick={() => markRead(n._id)} disabled={n.isRead}>
-                ✓
-              </button>
+              <div className="row-actions">
+                <button type="button" className="icon-btn" onClick={() => markRead(n._id)} disabled={n.isRead} title="Mark as read">
+                  ✓
+                </button>
+                <button type="button" className="icon-btn danger" onClick={() => clearOne(n._id)} title="Clear notification">
+                  🗑
+                </button>
+              </div>
             </div>
           ))
         )}

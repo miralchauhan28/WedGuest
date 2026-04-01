@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { validateName, validatePasswordPair } from "../utils/authValidation.js";
+import { createAdminNotification } from "../services/adminNotificationService.js";
 
 export async function getProfile(req, res) {
   const user = await User.findById(req.userId).select("-passwordHash");
@@ -27,6 +28,10 @@ export async function updateProfile(req, res) {
     { new: true }
   );
   if (!user) return res.status(404).json({ message: "User not found." });
+  await createAdminNotification(
+    "Profile updated",
+    `${user.name} updated their profile details.`
+  );
 
   res.json({
     message: "Profile updated.",
@@ -53,5 +58,9 @@ export async function changePassword(req, res) {
 
   user.passwordHash = await bcrypt.hash(passCheck.value, 12);
   await user.save();
+  await createAdminNotification(
+    "Password changed",
+    `${user.name} changed their account password.`
+  );
   res.json({ message: "Password updated successfully." });
 }
