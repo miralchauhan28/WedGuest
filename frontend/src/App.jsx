@@ -15,6 +15,9 @@ import WeddingsPage from "./pages/WeddingsPage.jsx";
 import WeddingGuestsPage from "./pages/WeddingGuestsPage.jsx";
 import UserProfilePage from "./pages/UserProfilePage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import AdminWeddingsPage from "./pages/AdminWeddingsPage.jsx";
+import AdminUsersPage from "./pages/AdminUsersPage.jsx";
+import AdminNotificationsPage from "./pages/AdminNotificationsPage.jsx";
 
 function App() {
   return (
@@ -52,6 +55,9 @@ function App() {
       >
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="weddings" element={<AdminWeddingsPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="notifications" element={<AdminNotificationsPage />} />
       </Route>
 
     </Routes>

@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import mongoose from "mongoose";
 import authRoutes from "./routes/auth.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import guestPublicRoutes from "./routes/guest-public.routes.js";
 import weddingRoutes from "./routes/wedding.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -21,6 +22,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/guest-rsvp", guestPublicRoutes);
 app.use("/api/weddings", weddingRoutes);
 app.use("/api/user", userRoutes);

@@ -1,5 +1,7 @@
 import Guest from "../models/Guest.js";
 import Wedding from "../models/Wedding.js";
+import User from "../models/User.js";
+import { createAdminNotification } from "../services/adminNotificationService.js";
 
 function validateWeddingBody(body) {
   const { coupleName, weddingDate, location } = body || {};
@@ -32,6 +34,11 @@ export async function createWedding(req, res) {
     userId: req.userId,
     ...check.value,
   });
+  const owner = await User.findById(req.userId).lean();
+  await createAdminNotification(
+    "New wedding created",
+    `${owner?.name || "A user"} created wedding "${doc.coupleName}" scheduled for ${doc.weddingDate.toDateString()} at ${doc.location}.`
+  );
   res.status(201).json({ message: "Wedding created.", wedding: doc });
 }
 
