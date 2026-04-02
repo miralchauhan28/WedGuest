@@ -9,65 +9,57 @@ Monorepo with a **React** (Vite) client in `frontend/` and an **Express** API in
 
 ## Setup
 
-1. Install dependencies in `frontend/` and `backend/` (no packages are installed at the repo root):
+1. Clone the repository and open the project folder.
 
-   ```bash
-   npm run install:all
-   ```
+2. Install dependencies **separately** (each app has its own `package.json`):
+   - `cd frontend` → `npm install`
+   - `cd backend` → `npm install`
+   - Or from the repo root: `npm run install:all` (runs installs in both folders)
 
-2. Configure the backend. Copy `backend/.env.example` to `backend/.env` and set `MONGODB_URI` (see [MongoDB connection](#mongodb-connection)).
+3. Configure the backend:
+   - Copy `backend/.env.example` to `backend/.env`
+   - Set `MONGODB_URI` (local or Atlas), `FRONTEND_URL` (default `http://localhost:5173`), `JWT_SECRET`
+   - Set SMTP
+   - Do **not** commit `.env`
 
-3. Start MongoDB if you use a local instance.
+4. Start MongoDB (local or Atlas) so `MONGODB_URI` is reachable.
 
-4. Run frontend and API together:
+5. Run the app from the repo root:
 
    ```bash
    npm run dev
    ```
 
-- Frontend: Vite dev server (default [http://localhost:5173](http://localhost:5173))
-- Backend: Express (default [http://localhost:5000](http://localhost:5000))
+6. Open:
+   - Frontend: [http://localhost:5173](http://localhost:5173)
+   - Backend API: [http://localhost:5000](http://localhost:5000)
+
+## Admin login (credentials)
+
+Admin is created on backend startup from **`backend/.env`**:
+
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+
+Use these on the login page; you will be routed to `/admin/dashboard`.
+
+## User flows (sign up, login, password, support)
+
+- **Sign up:** `/signup` → verify email at `/verify-email?token=...` → then **Login**
+- **Login:** `/` or `/login` → user goes to `/user/dashboard`, admin goes to `/admin/dashboard`
+- **Forgot password:** `/forgot-password` → email contains `/reset-password?token=...`
+- **Contact support:** on Login, Sign up, Forgot password, and Reset password pages, use **Reach Out To Support** (opens email client). 
+
+
+## CI / GitHub Actions
+
+Workflow files live under `.github/workflows/` (see repo tree below).
 
 ## Scripts (root)
 
 | Script | Description |
 |--------|-------------|
 | `npm run dev` | Runs Vite + Express via `npx concurrently` (no root `node_modules`) |
-| `npm run build` | Production build of the frontend |
-| `npm run start:backend` | Start the API (production-style; build frontend separately if needed) |
-
-## MongoDB connection
-
-1. Create a cluster (Atlas) or run `mongod` locally.
-2. Get a connection string, e.g. `mongodb://127.0.0.1:27017/wedguest` or Atlas `mongodb+srv://user:pass@cluster.mongodb.net/wedguest`.
-3. Put it in `backend/.env` as `MONGODB_URI=...`.
-4. Start the backend; it connects on boot using Mongoose.
-
-## Auth flow implemented
-
-- Frontend pages: `Login`, `Sign up`, `Forgot Password`, `Reset Password`
-- Roles:
-  - `admin`: pre-created by backend on startup from `ADMIN_*` env values
-  - `user`: must sign up and verify email code before login
-- Validations:
-  - Email format
-  - Name length
-  - Password strength (min 8, uppercase, lowercase, number, special char)
-  - Confirm password must match
-- Email link flows:
-  - Signup sends email verification link to `FRONTEND_URL/verify-email?token=...`
-  - Forgot password sends reset link to `FRONTEND_URL/reset-password?token=...`
-
-### Auth endpoints
-
-- `POST /api/auth/signup`
-- `GET /api/auth/verify-email?token=...`
-- `POST /api/auth/verify-email` (optional token in body)
-- `POST /api/auth/login`
-- `POST /api/auth/forgot-password`
-- `POST /api/auth/reset-password`
-
-In development mode, verification link and reset link are also returned in API responses to simplify testing.
 
 ## Project layout
 
