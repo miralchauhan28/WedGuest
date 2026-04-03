@@ -34,12 +34,35 @@ Monorepo with a **React** (Vite) client in `frontend/` and an **Express** API in
    - Frontend: [http://localhost:5173](http://localhost:5173)
    - Backend API: [http://localhost:5000](http://localhost:5000)
 
-## Admin login (credentials)
+## Admin & Environment Setup
 
-Admin is created on backend startup from **`backend/.env`**:
+To use the default admin login in development, add these credentials to your `backend/.env` file:
 
-- `ADMIN_EMAIL`
-- `ADMIN_PASSWORD`
+```
+ADMIN_EMAIL=admin@wedguest.local
+ADMIN_PASSWORD=Admin@123
+```
+
+These will be accessed from your environment variables as `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+
+You must also configure MongoDB and SMTP credentials in your `.env` to enable database access and sending emails:
+
+```
+MONGODB_URI=your_mongodb_connection_string
+FRONTEND_URL=http://localhost:5173
+
+# SMTP configuration for sending emails (use your mail provider details)
+EMAIL_USER=your_email@example.com
+EMAIL_PASS=your_email_app_password
+SMTP_HOST=smtp.example.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_ALLOW_SELF_SIGNED=false
+```
+
+**After setting these, you can log in on the admin login page:**
+- **Username:** `admin@wedguest.local`
+- **Password:** `Admin@123`
 
 Use these on the login page; you will be routed to `/admin/dashboard`.
 
