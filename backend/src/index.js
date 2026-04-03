@@ -20,8 +20,8 @@ async function start() {
   try {
     await connectDatabase();
     await seedAdminUser();
-    app.listen(PORT, () => {
-      console.log(`API listening on http://localhost:${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => { 
+      console.log(`API listening on this port:${PORT}`);
     });
   } catch (err) {
     console.error("Startup failed:", err.message);
