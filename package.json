@@ -10,5 +10,10 @@
     "test:frontend": "cd frontend && npm test",
     "test:backend": "cd backend && npm test",
     "test": "npm run test:frontend && npm run test:backend"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "vitest": "^4.1.2"
   }
 }
