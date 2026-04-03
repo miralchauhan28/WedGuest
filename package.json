@@ -3,17 +3,12 @@
   "private": true,
   "description": "Full-stack app: React frontend + Express backend",
   "scripts": {
-    "dev": "...",
-    "install:all": "...",
-    "build": "...",
-    "start:backend": "...",
+    "dev": "npx concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "start:backend": "npm run start --prefix backend",
     "test:frontend": "cd frontend && npm test",
     "test:backend": "cd backend && npm test",
     "test": "npm run test:frontend && npm run test:backend"
-  },
-  "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "vitest": "^4.1.2"
   }
 }
