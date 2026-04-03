@@ -30,10 +30,6 @@ Monorepo with a **React** (Vite) client in `frontend/` and an **Express** API in
    npm run dev
    ```
 
-6. Open:
-   - Frontend: [http://localhost:5173](http://localhost:5173)
-   - Backend API: [http://localhost:5000](http://localhost:5000)
-
 ## Admin & Environment Setup
 
 To use the default admin login in development, add these credentials to your `backend/.env` file:
