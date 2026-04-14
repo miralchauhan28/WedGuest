@@ -224,7 +224,7 @@ export async function createAdminUser(req, res) {
     isActive: true,
   });
 
-  const loginUrl = `${getFrontendUrl().replace(/\/+$/, "")}/login`;
+  const loginUrl = `${getFrontendUrl(req)}/login`;
   let emailSent = false;
   try {
     await sendAdminCreatedUserEmail({

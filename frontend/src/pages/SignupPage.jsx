@@ -1,12 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import AuthLogo from "../components/AuthLogo.jsx";
 import { Alert } from "../components/Alert.jsx";
-import { apiPost } from "../services/api.js";
+import { apiPost, setAuth } from "../services/api.js";
 import { validatePassword } from "../utils/validation.js";
 import { getSupportEmail, getSupportMailto } from "../utils/support.js";
 
 function SignupPage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -14,13 +15,11 @@ function SignupPage() {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e) {
     e.preventDefault();
     setError("");
-    setInfo("");
     const passwordErrors = validatePassword(form.password);
     if (passwordErrors.length > 0) {
       setError(`Password must include ${passwordErrors.join(", ")}.`);
@@ -39,10 +38,13 @@ function SignupPage() {
         password: "",
         confirmPassword: "",
       });
-      setInfo(data.message);
-      if (data.verificationLink) {
-        setInfo(`${data.message} Open the verification link from your email.`);
+      if (data.token) {
+        setAuth(data.token, data.user);
+      } else if (data.user) {
+        localStorage.setItem("wedguest_user", JSON.stringify(data.user));
       }
+      const dest = data.user?.role === "admin" ? "/admin/dashboard" : "/user/dashboard";
+      navigate(dest, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -103,11 +105,6 @@ function SignupPage() {
           {error && (
             <Alert variant="error" key={error} onDismiss={() => setError("")}>
               {error}
-            </Alert>
-          )}
-          {info && (
-            <Alert variant="success" key={info} onDismiss={() => setInfo("")}>
-              {info}
             </Alert>
           )}
           <p className="muted-center">

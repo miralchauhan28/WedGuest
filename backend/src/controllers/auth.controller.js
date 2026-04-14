@@ -1,14 +1,10 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { validateEmail, validateName, validatePasswordPair } from "../utils/authValidation.js";
-import { createResetToken, createVerificationToken, hashToken } from "../utils/tokens.js";
-import { createResetPasswordLink, createVerifyEmailLink } from "../utils/appUrls.js";
-import { sendResetPasswordEmail, sendVerificationEmail } from "../services/mailService.js";
+import { createResetToken, hashToken } from "../utils/tokens.js";
+import { createResetPasswordLink } from "../utils/appUrls.js";
+import { sendResetPasswordEmail } from "../services/mailService.js";
 import { signUserToken } from "../utils/jwt.js";
-
-function isDev() {
-  return process.env.NODE_ENV !== "production";
-}
 
 export async function signup(req, res) {
   const { name, email, password, confirmPassword } = req.body || {};
@@ -27,29 +23,28 @@ export async function signup(req, res) {
     return res.status(409).json({ message: "Email already exists. Please log in instead." });
   }
 
-  const verificationToken = createVerificationToken();
-  const verificationLink = createVerifyEmailLink(verificationToken);
   const passwordHash = await bcrypt.hash(passCheck.value, 12);
 
-  await User.create({
+  const user = await User.create({
     name: nameCheck.value,
     email: emailCheck.value,
     passwordHash,
     role: "user",
-    isVerified: false,
-    verificationTokenHash: hashToken(verificationToken),
-    verificationTokenExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+    isVerified: true,
   });
 
-  try {
-    await sendVerificationEmail(emailCheck.value, verificationLink);
-  } catch (err) {
-    console.error("Failed to send verification email:", err.message);
-  }
+  const token = signUserToken(user);
 
   return res.status(201).json({
-    message: "Signup successful. Verification email has been sent.",
-    ...(isDev() ? { verificationLink } : {}),
+    message: "Account created. Welcome!",
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+    },
   });
 }
 
@@ -129,7 +124,7 @@ export async function forgotPassword(req, res) {
   }
 
   const resetToken = createResetToken();
-  const resetLink = createResetPasswordLink(resetToken);
+  const resetLink = createResetPasswordLink(resetToken, req);
   user.resetTokenHash = hashToken(resetToken);
   user.resetTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await user.save();

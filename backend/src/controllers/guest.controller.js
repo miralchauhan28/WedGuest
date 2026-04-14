@@ -115,10 +115,12 @@ export async function createGuest(req, res) {
     });
 
     const acceptLink = createGuestRsvpLink(invitationToken, "accepted", {
+      req,
       hostName: host?.name,
       hostEmail: host?.email,
     });
     const declineLink = createGuestRsvpLink(invitationToken, "declined", {
+      req,
       hostName: host?.name,
       hostEmail: host?.email,
     });
